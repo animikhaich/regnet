@@ -1,13 +1,18 @@
 import os
 import os.path as P
 from glob import glob
+import sys
+if not sys.warnoptions:
+    import warnings
+    warnings.simplefilter("ignore")
 import argparse
 
 if __name__ == '__main__':
     paser = argparse.ArgumentParser()
     paser.add_argument("-i", "--input_dir", default="dataset/VEGAS/dog/videos")
     paser.add_argument("-o", "--output_dir", default="filelists")
-    paser.add_argument("-p", "--prefix", default="dog", choices=["dog", "fireworks", "baby", "drum", "gun", "sneeze", "cough", "hammer"])
+    paser.add_argument("-p", "--prefix", default="dog", choices=[
+                       "dog", "fireworks", "baby", "drum", "gun", "sneeze", "cough", "hammer"])
     args = paser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir

@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import argparse
 import math
 import os
@@ -18,14 +19,12 @@ from contextlib import redirect_stdout
 from config import _C as config
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 
 def prepare_dataloaders():
     # Get data, data loaders and collate function ready
     trainset = RegnetLoader(config.training_files)
     valset = RegnetLoader(config.test_files)
-
     train_loader = DataLoader(trainset, num_workers=4, shuffle=True,
                               batch_size=config.batch_size, pin_memory=False,
                               drop_last=True)
@@ -45,27 +44,31 @@ def test_model(model, criterion, test_loader, epoch, logger, visualization=False
                 for j in range(len(model.fake_B)):
                     plt.figure(figsize=(8, 9))
                     plt.subplot(311)
-                    plt.imshow(model.real_B[j].data.cpu().numpy(), 
-                                    aspect='auto', origin='lower')
+                    plt.imshow(model.real_B[j].data.cpu().numpy(),
+                               aspect='auto', origin='lower')
                     plt.title(model.video_name[j]+"_ground_truth")
                     plt.subplot(312)
-                    plt.imshow(model.fake_B[j].data.cpu().numpy(), 
-                                    aspect='auto', origin='lower')
+                    plt.imshow(model.fake_B[j].data.cpu().numpy(),
+                               aspect='auto', origin='lower')
                     plt.title(model.video_name[j]+"_predict")
                     plt.subplot(313)
-                    plt.imshow(model.fake_B_postnet[j].data.cpu().numpy(), 
-                                    aspect='auto', origin='lower')
+                    plt.imshow(model.fake_B_postnet[j].data.cpu().numpy(),
+                               aspect='auto', origin='lower')
                     plt.title(model.video_name[j]+"_postnet")
                     plt.tight_layout()
-                    viz_dir = os.path.join(config.save_dir, "viz", f'epoch_{epoch:05d}')
+                    viz_dir = os.path.join(
+                        config.save_dir, "viz", f'epoch_{epoch:05d}')
                     os.makedirs(viz_dir, exist_ok=True)
-                    plt.savefig(os.path.join(viz_dir, model.video_name[j]+".jpg"))
+                    plt.savefig(os.path.join(
+                        viz_dir, model.video_name[j]+".jpg"))
                     plt.close()
-            loss = criterion((model.fake_B, model.fake_B_postnet), model.real_B)
+            loss = criterion(
+                (model.fake_B, model.fake_B_postnet), model.real_B)
             reduced_loss = loss.item()
             reduced_loss_.append(reduced_loss)
             if not math.isnan(reduced_loss):
-                print("Test loss epoch:{} iter:{} {:.6f} ".format(epoch, i, reduced_loss))
+                print("Test loss epoch:{} iter:{} {:.6f} ".format(
+                    epoch, i, reduced_loss))
         logger.log_testing(np.mean(reduced_loss_), epoch)
     model.train()
 
@@ -104,21 +107,24 @@ def train():
             model.parse_batch(batch)
             model.optimize_parameters()
             learning_rate = model.optimizers[0].param_groups[0]['lr']
-            loss = criterion((model.fake_B, model.fake_B_postnet), model.real_B)
+            loss = criterion(
+                (model.fake_B, model.fake_B_postnet), model.real_B)
             reduced_loss = loss.item()
 
             if not math.isnan(reduced_loss):
                 duration = time.perf_counter() - start
                 print("epoch:{} iter:{} loss:{:.6f} G:{:.6f} D:{:.6f} D_r-f:{:.6f} G_s:{:.6f} time:{:.2f}s/it".format(
                     epoch, i, reduced_loss, model.loss_G, model.loss_D, (model.pred_real - model.pred_fake).mean(), model.loss_G_silence, duration))
-                logger.log_training(model, reduced_loss, learning_rate, duration, iteration)
+                logger.log_training(model, reduced_loss,
+                                    learning_rate, duration, iteration)
 
             iteration += 1
         if epoch % config.num_epoch_save != 0:
             test_model(model, criterion, test_loader, epoch, logger)
         if epoch % config.num_epoch_save == 0:
             print("evaluation and save model")
-            test_model(model, criterion, test_loader, epoch, logger, visualization=True)
+            test_model(model, criterion, test_loader,
+                       epoch, logger, visualization=True)
             model.save_checkpoint(config.save_dir, iteration)
 
         model.update_learning_rate()
@@ -134,13 +140,13 @@ if __name__ == '__main__':
 
     if args.config_file:
         config.merge_from_file(args.config_file)
- 
+
     config.merge_from_list(args.opts)
     # config.freeze()
 
     os.makedirs(config.save_dir, exist_ok=True)
     with open(os.path.join(config.save_dir, 'opts.yml'), 'w') as f:
-        with redirect_stdout(f): 
+        with redirect_stdout(f):
             print(config.dump())
     f.close()
 

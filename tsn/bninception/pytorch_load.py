@@ -7,10 +7,10 @@ import yaml
 
 class BNInception(nn.Module):
     def __init__(self, model_path='tsn/bninception/bn_inception.yaml', num_classes=101,
-                       weight_url='https://yjxiong.blob.core.windows.net/models/bn_inception-9f5701afb96c8044.pth'):
+                    weight_url='https://yjxiong.blob.core.windows.net/models/bn_inception-9f5701afb96c8044.pth'):
         super(BNInception, self).__init__()
 
-        manifest = yaml.load(open(model_path))
+        manifest = yaml.full_load(open(model_path))
 
         layers = manifest['layers']
 
@@ -21,8 +21,10 @@ class BNInception(nn.Module):
             out_var, op, in_var = parse_expr(l['expr'])
             if op != 'Concat':
                 id, out_name, module, out_channel, in_name = get_basic_layer(l,
-                                                                3 if len(self._channel_dict) == 0 else self._channel_dict[in_var[0]],
-                                                                             conv_bias=True)
+                                                                                3 if len(
+                                                                                    self._channel_dict) == 0 else self._channel_dict[in_var[0]],
+                                                                                conv_bias=True
+                                                                            )
 
                 self._channel_dict[out_name] = out_channel
                 setattr(self, id, module)
@@ -34,7 +36,8 @@ class BNInception(nn.Module):
 
         """compatible to modified model"""
         state_dict = torch.utils.model_zoo.load_url(weight_url)
-        state_dict = {k: v for k, v in state_dict.items() if k in self.state_dict()}
+        state_dict = {k: v for k, v in state_dict.items()
+                        if k in self.state_dict()}
 
         """compatible to pytorch 0.4.0"""
         for name, weights in state_dict.items():
@@ -62,9 +65,10 @@ class BNInception(nn.Module):
                 data_dict[op[2]] = getattr(self, op[0])(x.view(x.size(0), -1))
             else:
                 try:
-                    data_dict[op[2]] = torch.cat(tuple(data_dict[x] for x in op[-1]), 1)
+                    data_dict[op[2]] = torch.cat(
+                        tuple(data_dict[x] for x in op[-1]), 1)
                 except:
                     for x in op[-1]:
-                        print(x,data_dict[x].size())
+                        print(x, data_dict[x].size())
                     raise
         return data_dict[self._op_list[-1][2]]
