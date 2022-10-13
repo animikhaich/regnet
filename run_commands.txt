@@ -1,0 +1,14 @@
+CUDA_VISIBLE_DEVICES=0 python train.py save_dir ckpt/dog auxiliary_dim 32 rgb_feature_dir data/features/dog/feature_rgb_bninception_dim1024_21.5fps flow_feature_dir data/features/dog/feature_flow_bninception_dim1024_21.5fps mel_dir data/features/dog/melspec_10s_22050hz checkpoint_path ''
+
+
+CUDA_VISIBLE_DEVICES=0 python test.py -c config/dog_opts.yml aux_zero True checkpoint_path ckpt/dog/checkpoint_041000 save_dir ckpt/dog/inference_result wavenet_path wavenets/dog_checkpoint_step000200000_ema.pth
+
+docker run --gpus all -it -v $PWD:/workspace --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 --name animikh_train pytorch/pytorch:1.12.1-cuda11.3-cudnn8-runtime
+
+# For OpenCV
+apt install libsm6 libxext6 libxrender-dev
+apt install libglib2.0-0
+
+# For librosa
+pip install --upgrade librosa
+apt-get install libsndfile1-dev

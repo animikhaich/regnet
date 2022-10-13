@@ -19,7 +19,7 @@ do
 
     #Split training/testing list
     python gen_list.py \
-    -i data/VAS/videos/${soundtype} \
+    -i data/VAS/${soundtype}/videos \
     -o filelists --prefix ${soundtype}
 
     #Extract Mel-spectrogram from audio
